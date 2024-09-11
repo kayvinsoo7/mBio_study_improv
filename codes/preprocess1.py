@@ -55,8 +55,34 @@ def process_multidata(shared, meta):
     return x, y
 
 def process_SRNdata(shared, meta):
+    print(meta.columns)
     ## Remove unnecessary columns from meta and only keep label for classification(diagnosis), FIT result and the sample name
     meta = meta[['sample','Dx_Bin', 'fit_result']]
+    print(meta.columns)
+    ## Rename the column name "Group" to match the "sample" in meta
+    shared = shared.rename(index=str, columns={"Group":"sample"})
+    ## Merge the 2 datasets on sample
+    data=pd.merge(meta,shared,on=['sample'])
+    ## Drop all except OTU columns for x
+    x = data.drop(["sample", 'Dx_Bin', "numOtus", "label", 'fit_result'], axis=1)
+    # x.drop(columns=['fit_result'], inplace=True)
+    ## Cancer+adenoma =1 Normal =0
+    diagnosis = {"Adenoma":0, "adv Adenoma":1, "Cancer":1, "Normal":0, "High Risk Normal":0}
+    ## Generate y which had diagnosis 0, 1, 2
+    y = data['Dx_Bin'].replace(diagnosis)
+    # y = np.eye(2, dtype='uint8')[y]
+    ## Drop if NA elements
+    y = y.dropna()
+    y= y.values
+    x = x.dropna()
+    print('tyeuwyhgsui')
+    return x, y
+
+def process_4_diabetes(shared, meta):
+    ## Remove unnecessary columns from meta and only keep label for classification(diagnosis), FIT result and the sample name
+    meta = meta[['sample','Dx_Bin', 'Age', 'Gender', 'Smoke', 'Diabetic', 'BMI']]
+    meta['Gender'] = meta['Gender'].replace({'m': 1, 'f': 0})
+    meta['Diabetic'] = meta['Diabetic'].replace({np.nan: 1.0})
     ## Rename the column name "Group" to match the "sample" in meta
     shared = shared.rename(index=str, columns={"Group":"sample"})
     ## Merge the 2 datasets on sample
